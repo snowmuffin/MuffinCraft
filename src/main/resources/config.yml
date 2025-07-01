@@ -1,2 +1,12 @@
+api:
+  url: 'http://localhost:3000'
+  token: '' # 실제 배포 시 설정 필요
 
+inventory:
+  title: '&6MuffinCraft Inventory'
+  rows: 6 # 인벤토리 행 수 (1행 = 9슬롯)
 
+currency:
+  enable: true
+  symbol: '₩'  # 화폐 기호
+  default_balance: 0

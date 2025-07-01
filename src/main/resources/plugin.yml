@@ -1,10 +1,47 @@
 name: MuffinCraft
-version: '${version}'
-main: com.snowmuffin.muffincraft.MuffinCraft
-api-version: '1.21'
-commands:
-  inventory:
-    description: 커스텀 인벤토리를 엽니다
-    usage: /<command>
-    aliases: [inv]
+version: '1.0.0'
+main: com.muffincraft.plugin.MuffinCraftPlugin
+api-version: '1.20'
+authors: [GameHub]
+description: GameHub의 MuffinCraft 플러그인
+website: https://gamehub.example.com
 
+commands:
+  muffincraft:
+    description: MuffinCraft 플러그인의 메인 명령어
+    usage: /<command> [reload|sync|inventory|balance]
+    aliases: [mc]
+    permission: muffincraft.use
+  inventory:
+    description: MuffinCraft 온라인 인벤토리를 엽니다
+    usage: /<command>
+    permission: muffincraft.inventory
+  balance:
+    description: MuffinCraft 재화 잔액을 확인합니다
+    usage: /<command> [send <player> <amount>]
+    permission: muffincraft.balance
+
+permissions:
+  muffincraft.*:
+    description: MuffinCraft의 모든 권한을 부여합니다
+    children:
+      muffincraft.use: true
+      muffincraft.admin: true
+      muffincraft.inventory: true
+      muffincraft.balance: true
+  muffincraft.use:
+    description: MuffinCraft 플러그인의 기본 사용 권한
+    default: true
+  muffincraft.admin:
+    description: MuffinCraft 플러그인의 관리자 권한
+    default: op
+  muffincraft.inventory:
+    description: 온라인 인벤토리 사용 권한
+    default: true
+  muffincraft.balance:
+    description: 재화 시스템 사용 권한
+    default: true
+
+api:
+  url: http://localhost:3000
+  token: '' # 실제 배포 시 설정 필요
