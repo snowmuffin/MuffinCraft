@@ -18,6 +18,7 @@ dependencies {
     compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
     implementation 'com.squareup.okhttp3:okhttp:4.9.3'
     implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'com.googlecode.json-simple:json-simple:1.1.1'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok:1.18.30'
@@ -36,6 +37,21 @@ shadowJar {
     archiveBaseName.set('MuffinCraft')
     archiveClassifier.set('')
     archiveVersion.set('')
+
+    // 패키지 relocate
     relocate 'okhttp3', 'com.muffincraft.plugin.libs.okhttp3'
+    relocate 'okio', 'com.muffincraft.plugin.libs.okio'
     relocate 'com.google.gson', 'com.muffincraft.plugin.libs.gson'
+    relocate 'org.json.simple', 'com.muffincraft.plugin.libs.json'
+    relocate 'kotlin', 'com.muffincraft.plugin.libs.kotlin'
+
+    // 불필요한 파일 제외
+    exclude 'META-INF/*.SF'
+    exclude 'META-INF/*.DSA'
+    exclude 'META-INF/*.RSA'
+}
+
+// shadowJar를 기본 빌드 작업에 포함
+build {
+    dependsOn shadowJar
 }

@@ -21,6 +21,8 @@ public class MuffinCraftCommand implements CommandExecutor {
                 "§6===== MuffinCraft Commands =====",
                 "§e/" + label + " reload §7- 설정 파일을 다시 로드합니다",
                 "§e/" + label + " sync §7- 인벤토리를 강제로 동기화합니다",
+                "§e/" + label + " auth §7- 계정 연동용 인증 코드를 발급받습니다",
+                "§e/" + label + " status §7- 계정 연동 상태를 확인합니다",
                 "§e/inventory §7- 온라인 인벤토리를 엽니다",
                 "§e/balance §7- 재화 잔액을 확인합니다",
                 "§e/balance send <플레이어> <금액> §7- 재화를 전송합니다"
@@ -46,6 +48,46 @@ public class MuffinCraftCommand implements CommandExecutor {
                 Player player = (Player) sender;
                 plugin.getInventoryService().handleInventoryChange(player, Arrays.asList(player.getInventory().getContents()));
                 sender.sendMessage("§a인벤토리 동기화를 시작했습니다.");
+                return true;
+
+            case "auth":
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+                    return true;
+                }
+                Player authPlayer = (Player) sender;
+                sender.sendMessage("§e인증 코드를 생성하고 있습니다...");
+
+                plugin.getAuthService().generateAuthCode(authPlayer).thenAccept(result -> {
+                    authPlayer.sendMessage("§6===== 계정 연동 인증 코드 =====");
+                    authPlayer.sendMessage(result);
+                    if (result.contains("§a")) { // 성공한 경우
+                        authPlayer.sendMessage("§7웹사이트에서 이 코드를 입력하여 계정을 연동하세요.");
+                        authPlayer.sendMessage("§7인증 코드는 10분간 유효합니다.");
+                    }
+                }).exceptionally(throwable -> {
+                    authPlayer.sendMessage("§c인증 코드 생성 중 오류가 발생했습니다.");
+                    plugin.getLogger().severe("Auth code generation error: " + throwable.getMessage());
+                    return null;
+                });
+                return true;
+
+            case "status":
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+                    return true;
+                }
+                Player statusPlayer = (Player) sender;
+                sender.sendMessage("§e계정 연동 상태를 확인하고 있습니다...");
+
+                plugin.getAuthService().getAccountStatus(statusPlayer).thenAccept(result -> {
+                    statusPlayer.sendMessage("§6===== 계정 연동 상태 =====");
+                    statusPlayer.sendMessage(result);
+                }).exceptionally(throwable -> {
+                    statusPlayer.sendMessage("§c계정 상태 확인 중 오류가 발생했습니다.");
+                    plugin.getLogger().severe("Account status check error: " + throwable.getMessage());
+                    return null;
+                });
                 return true;
 
             default:

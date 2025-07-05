@@ -5,6 +5,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import com.muffincraft.plugin.listeners.PlayerListener;
 import com.muffincraft.plugin.services.InventoryService;
 import com.muffincraft.plugin.services.CurrencyService;
+import com.muffincraft.plugin.services.AuthService;
 import com.muffincraft.plugin.api.GameHubAPI;
 import com.muffincraft.plugin.config.Config;
 import com.muffincraft.plugin.commands.InventoryCommand;
@@ -18,6 +19,7 @@ public class MuffinCraftPlugin extends JavaPlugin {
     @Getter private GameHubAPI gameHubAPI;
     @Getter private InventoryService inventoryService;
     @Getter private CurrencyService currencyService;
+    @Getter private AuthService authService;
 
     @Override
     public void onEnable() {
@@ -31,6 +33,7 @@ public class MuffinCraftPlugin extends JavaPlugin {
         // 서비스 초기화
         inventoryService = new InventoryService(this, gameHubAPI);
         currencyService = new CurrencyService(this, gameHubAPI);
+        authService = new AuthService(this, gameHubAPI);
 
         // 이벤트 리스너 등록
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);

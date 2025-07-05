@@ -42,7 +42,7 @@ public class GameHubAPI {
             );
 
             Request request = new Request.Builder()
-                .url(baseUrl + "/muffincraft/inventory/sync/" + playerId.toString())
+                .url(baseUrl + "/inventory/sync/" + playerId.toString())
                 .post(body)
                 .addHeader("Authorization", "Bearer " + authToken)
                 .build();
@@ -72,7 +72,7 @@ public class GameHubAPI {
     public CompletableFuture<Map<String, Object>> getInventory(UUID playerId) {
         return CompletableFuture.supplyAsync(() -> {
             Request request = new Request.Builder()
-                .url(baseUrl + "/muffincraft/inventory/" + playerId.toString())
+                .url(baseUrl + "/inventory/" + playerId.toString())
                 .get()
                 .addHeader("Authorization", "Bearer " + authToken)
                 .build();
@@ -92,7 +92,7 @@ public class GameHubAPI {
     public CompletableFuture<Double> getBalance(UUID playerId) {
         return CompletableFuture.supplyAsync(() -> {
             Request request = new Request.Builder()
-                .url(baseUrl + "/muffincraft/currency/balance/" + playerId.toString())
+                .url(baseUrl + "/currency/balance/" + playerId.toString())
                 .get()
                 .addHeader("Authorization", "Bearer " + authToken)
                 .build();
@@ -123,7 +123,7 @@ public class GameHubAPI {
             );
 
             Request request = new Request.Builder()
-                .url(baseUrl + "/muffincraft/currency/transfer")
+                .url(baseUrl + "/currency/transfer")
                 .post(body)
                 .addHeader("Authorization", "Bearer " + authToken)
                 .build();
@@ -149,7 +149,7 @@ public class GameHubAPI {
             );
 
             Request request = new Request.Builder()
-                .url(baseUrl + "/muffincraft/currency/add")
+                .url(baseUrl + "/currency/add")
                 .post(body)
                 .addHeader("Authorization", "Bearer " + authToken)
                 .build();
