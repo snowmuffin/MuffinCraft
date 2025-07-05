@@ -22,6 +22,9 @@ public class BalanceCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
+        
+        // 플레이어 토큰 자동 갱신
+        plugin.getAuthService().refreshPlayerToken(player);
 
         if (args.length == 0) {
             // 잔액 확인

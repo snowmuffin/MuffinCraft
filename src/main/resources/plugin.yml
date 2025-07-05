@@ -13,9 +13,14 @@ commands:
     aliases: [mc]
     permission: muffincraft.use
   inventory:
-    description: MuffinCraft 온라인 인벤토리를 엽니다
+    description: "[DEPRECATED] MuffinCraft 온라인 인벤토리를 엽니다"
     usage: /<command>
     permission: muffincraft.inventory
+  warehouse:
+    description: MuffinCraft 외부 창고를 엽니다
+    usage: /<command> [list|deposit <quantity>|withdraw <itemId> <quantity>|help]
+    aliases: [wh, 창고]
+    permission: muffincraft.warehouse
   balance:
     description: MuffinCraft 재화 잔액을 확인합니다
     usage: /<command> [send <player> <amount>]
@@ -28,6 +33,7 @@ permissions:
       muffincraft.use: true
       muffincraft.admin: true
       muffincraft.inventory: true
+      muffincraft.warehouse: true
       muffincraft.balance: true
   muffincraft.use:
     description: MuffinCraft 플러그인의 기본 사용 권한
@@ -36,7 +42,10 @@ permissions:
     description: MuffinCraft 플러그인의 관리자 권한
     default: op
   muffincraft.inventory:
-    description: 온라인 인벤토리 사용 권한
+    description: "[DEPRECATED] 온라인 인벤토리 사용 권한"
+    default: true
+  muffincraft.warehouse:
+    description: 외부 창고 사용 권한
     default: true
   muffincraft.balance:
     description: 재화 시스템 사용 권한

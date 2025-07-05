@@ -162,4 +162,196 @@ public class GameHubAPI {
             }
         });
     }
+
+    /**
+     * 플레이어 토큰을 사용하여 인벤토리 동기화
+     */
+    public CompletableFuture<Boolean> syncInventoryWithPlayerToken(UUID playerId, ItemStack item, String playerToken) {
+        return CompletableFuture.supplyAsync(() -> {
+            Map<String, Object> itemData = new HashMap<>();
+            itemData.put("itemId", item.getType().toString());
+            itemData.put("quantity", item.getAmount());
+            itemData.put("metadata", serializeItemMetadata(item));
+
+            RequestBody body = RequestBody.create(
+                gson.toJson(itemData),
+                MediaType.parse("application/json")
+            );
+
+            Request request = new Request.Builder()
+                .url(baseUrl + "/muffincraft/inventory/sync")
+                .post(body)
+                .addHeader("Authorization", playerToken != null ? playerToken : "Bearer " + authToken)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    plugin.getLogger().info("인벤토리 동기화 성공: " + playerId + " - " + item.getType());
+                    return true;
+                } else {
+                    plugin.getLogger().warning("인벤토리 동기화 실패: " + response.code() + " - " + response.message());
+                    return false;
+                }
+            } catch (IOException e) {
+                plugin.getLogger().severe("인벤토리 동기화 중 오류: " + e.getMessage());
+                return false;
+            }
+        });
+    }
+
+    /**
+     * 플레이어 토큰을 사용하여 통화 정보 조회
+     */
+    public CompletableFuture<String> getCurrencyWithPlayerToken(UUID playerId, String playerToken) {
+        return CompletableFuture.supplyAsync(() -> {
+            Request request = new Request.Builder()
+                .url(baseUrl + "/muffincraft/currency")
+                .get()
+                .addHeader("Authorization", playerToken != null ? playerToken : "Bearer " + authToken)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    String responseBody = response.body().string();
+                    plugin.getLogger().info("통화 조회 성공: " + playerId);
+                    return responseBody;
+                } else {
+                    plugin.getLogger().warning("통화 조회 실패: " + response.code() + " - " + response.message());
+                    return null;
+                }
+            } catch (IOException e) {
+                plugin.getLogger().severe("통화 조회 중 오류: " + e.getMessage());
+                return null;
+            }
+        });
+    }
+
+    /**
+     * 플레이어 토큰을 사용하여 통화 업데이트
+     */
+    public CompletableFuture<Boolean> updateCurrencyWithPlayerToken(UUID playerId, String currencyType, int amount, String reason, String playerToken) {
+        return CompletableFuture.supplyAsync(() -> {
+            Map<String, Object> currencyData = new HashMap<>();
+            currencyData.put("currencyType", currencyType);
+            currencyData.put("amount", amount);
+            currencyData.put("reason", reason);
+
+            RequestBody body = RequestBody.create(
+                gson.toJson(currencyData),
+                MediaType.parse("application/json")
+            );
+
+            Request request = new Request.Builder()
+                .url(baseUrl + "/muffincraft/currency")
+                .post(body)
+                .addHeader("Authorization", playerToken != null ? playerToken : "Bearer " + authToken)
+                .addHeader("Content-Type", "application/json")
+                .build();
+
+            try (Response response = client.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    plugin.getLogger().info("통화 업데이트 성공: " + playerId + " - " + currencyType + ": " + amount);
+                    return true;
+                } else {
+                    plugin.getLogger().warning("통화 업데이트 실패: " + response.code() + " - " + response.message());
+                    return false;
+                }
+            } catch (IOException e) {
+                plugin.getLogger().severe("통화 업데이트 중 오류: " + e.getMessage());
+                return false;
+            }
+        });
+    }
+
+    /**
+     * 플레이어의 창고 아이템 목록을 가져옵니다
+     */
+    public CompletableFuture<org.json.simple.JSONArray> getWarehouseItems(UUID playerId, String authHeader) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Request request = new Request.Builder()
+                    .url(baseUrl + "/warehouse/my-warehouse")
+                    .get()
+                    .addHeader("Authorization", authHeader)
+                    .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        String responseBody = response.body().string();
+                        org.json.simple.parser.JSONParser parser = new org.json.simple.parser.JSONParser();
+                        return (org.json.simple.JSONArray) parser.parse(responseBody);
+                    }
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("창고 아이템 조회 실패: " + e.getMessage());
+            }
+            return null;
+        });
+    }
+
+    /**
+     * 창고에 아이템을 입금합니다
+     */
+    public CompletableFuture<Boolean> depositWarehouseItem(UUID playerId, ItemStack item, int quantity, String authHeader) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Map<String, Object> itemData = new HashMap<>();
+                itemData.put("itemId", item.getType().toString());
+                itemData.put("itemName", item.getType().name().toLowerCase().replace("_", " "));
+                itemData.put("quantity", quantity);
+                itemData.put("metadata", serializeItemMetadata(item));
+
+                RequestBody body = RequestBody.create(
+                    MediaType.parse("application/json"),
+                    gson.toJson(itemData)
+                );
+
+                Request request = new Request.Builder()
+                    .url(baseUrl + "/warehouse/deposit")
+                    .post(body)
+                    .addHeader("Authorization", authHeader)
+                    .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    return response.isSuccessful();
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("창고 입금 실패: " + e.getMessage());
+                return false;
+            }
+        });
+    }
+
+    /**
+     * 창고에서 아이템을 출금합니다
+     */
+    public CompletableFuture<Boolean> withdrawWarehouseItem(UUID playerId, String itemId, int quantity, String authHeader) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Map<String, Object> withdrawData = new HashMap<>();
+                withdrawData.put("itemId", itemId);
+                withdrawData.put("quantity", quantity);
+
+                RequestBody body = RequestBody.create(
+                    MediaType.parse("application/json"),
+                    gson.toJson(withdrawData)
+                );
+
+                Request request = new Request.Builder()
+                    .url(baseUrl + "/warehouse/withdraw")
+                    .post(body)
+                    .addHeader("Authorization", authHeader)
+                    .build();
+
+                try (Response response = client.newCall(request).execute()) {
+                    return response.isSuccessful();
+                }
+            } catch (Exception e) {
+                plugin.getLogger().warning("창고 출금 실패: " + e.getMessage());
+                return false;
+            }
+        });
+    }
 }

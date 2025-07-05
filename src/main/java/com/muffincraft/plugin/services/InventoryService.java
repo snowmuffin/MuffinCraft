@@ -10,6 +10,11 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * @deprecated 인벤토리 자동 동기화는 더 이상 사용하지 않습니다.
+ * 대신 WarehouseService를 사용하여 외부 창고 시스템을 이용하세요.
+ */
+@Deprecated
 public class InventoryService {
     private final MuffinCraftPlugin plugin;
     private final GameHubAPI gameHubAPI;
@@ -22,44 +27,32 @@ public class InventoryService {
         this.lastSyncTime = new ConcurrentHashMap<>();
     }
 
+    /**
+     * @deprecated 자동 인벤토리 동기화는 더 이상 사용하지 않습니다.
+     * 플레이어는 /warehouse 명령어를 통해 수동으로 창고를 관리해야 합니다.
+     */
+    @Deprecated
     public void handleInventoryChange(Player player, List<ItemStack> items) {
-        UUID playerId = player.getUniqueId();
-
-        // 중복 동기화 방지
-        long currentTime = System.currentTimeMillis();
-        Long lastSync = lastSyncTime.get(playerId);
-        if (lastSync != null && currentTime - lastSync < SYNC_COOLDOWN) {
-            return;
-        }
-
-        lastSyncTime.put(playerId, currentTime);
-
-        // 각 아이템에 대해 동기화 수행
-        for (ItemStack item : items) {
-            if (item != null) {
-                gameHubAPI.syncInventory(playerId, item)
-                    .thenAccept(success -> {
-                        if (!success) {
-                            plugin.getLogger().warning("Failed to sync item for player: " + player.getName());
-                        }
-                    });
-            }
-        }
+        // 더 이상 자동 동기화하지 않음
+        plugin.getLogger().info("인벤토리 자동 동기화는 비활성화되었습니다. /warehouse 명령어를 사용하세요.");
     }
 
+    /**
+     * @deprecated 자동 인벤토리 동기화는 더 이상 사용하지 않습니다.
+     */
+    @Deprecated
     public void handleInventoryChange(Player player, ItemStack item) {
-        if (item != null) {
-            handleInventoryChange(player, List.of(item));
-        }
+        // 더 이상 자동 동기화하지 않음
     }
 
+    /**
+     * @deprecated 자동 인벤토리 로드는 더 이상 사용하지 않습니다.
+     * 플레이어는 /warehouse 명령어를 통해 창고에 접근해야 합니다.
+     */
+    @Deprecated
     public void loadPlayerInventory(Player player) {
-        gameHubAPI.getInventory(player.getUniqueId())
-            .thenAccept(inventory -> {
-                plugin.getServer().getScheduler().runTask(plugin, () -> {
-                    // TODO: 서버에서 받아온 인벤토리 데이터를 플레이어 인벤토리에 적용
-                    // 이 부분은 실제 구현 시 아이템 변환 로직이 필요합니다
-                });
-            });
+        // 더 이상 자동으로 인벤토리를 로드하지 않음
+        player.sendMessage("§e이제 /warehouse 명령어를 사용하여 외부 창고에 접근할 수 있습니다!");
+        plugin.getLogger().info("플레이어 " + player.getName() + "에게 외부 창고 시스템 안내 완료");
     }
 }

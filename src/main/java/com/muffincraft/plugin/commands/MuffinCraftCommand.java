@@ -16,12 +16,19 @@ public class MuffinCraftCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        // 플레이어가 명령어를 실행하는 경우 토큰 자동 갱신
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            plugin.getAuthService().refreshPlayerToken(player);
+        }
+        
         if (args.length == 0) {
             sender.sendMessage(new String[] {
                 "§6===== MuffinCraft Commands =====",
                 "§e/" + label + " reload §7- 설정 파일을 다시 로드합니다",
                 "§e/" + label + " sync §7- 인벤토리를 강제로 동기화합니다",
                 "§e/" + label + " auth §7- 계정 연동용 인증 코드를 발급받습니다",
+                "§e/" + label + " token §7- API 사용을 위한 플레이어 토큰을 발급받습니다",
                 "§e/" + label + " status §7- 계정 연동 상태를 확인합니다",
                 "§e/inventory §7- 온라인 인벤토리를 엽니다",
                 "§e/balance §7- 재화 잔액을 확인합니다",
@@ -86,6 +93,28 @@ public class MuffinCraftCommand implements CommandExecutor {
                 }).exceptionally(throwable -> {
                     statusPlayer.sendMessage("§c계정 상태 확인 중 오류가 발생했습니다.");
                     plugin.getLogger().severe("Account status check error: " + throwable.getMessage());
+                    return null;
+                });
+                return true;
+
+            case "token":
+                if (!(sender instanceof Player)) {
+                    sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+                    return true;
+                }
+                Player tokenPlayer = (Player) sender;
+                sender.sendMessage("§e플레이어 토큰을 발급하고 있습니다...");
+
+                plugin.getAuthService().generatePlayerToken(tokenPlayer).thenAccept(result -> {
+                    tokenPlayer.sendMessage("§6===== 플레이어 토큰 발급 =====");
+                    tokenPlayer.sendMessage(result);
+                    if (result.contains("§a")) { // 성공한 경우
+                        tokenPlayer.sendMessage("§7이 토큰으로 API를 사용할 수 있습니다.");
+                        tokenPlayer.sendMessage("§7토큰은 연동 상태에 따라 6-24시간 유효합니다.");
+                    }
+                }).exceptionally(throwable -> {
+                    tokenPlayer.sendMessage("§c토큰 발급 중 오류가 발생했습니다.");
+                    plugin.getLogger().severe("Player token generation error: " + throwable.getMessage());
                     return null;
                 });
                 return true;

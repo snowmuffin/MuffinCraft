@@ -139,4 +139,223 @@ public class AuthService {
             }
         });
     }
+
+    /**
+     * 플레이어 토큰을 생성하고 반환합니다 (연동 여부 무관).
+     * @param player 토큰을 요청하는 플레이어
+     * @return CompletableFuture<String> 생성된 토큰 또는 에러 메시지
+     */
+    public CompletableFuture<String> generatePlayerToken(Player player) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String apiUrl = baseUrl + "/player/token";
+                URL url = new URL(apiUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+                // POST 요청 설정
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+
+                // 요청 바디 생성
+                JSONObject requestBody = new JSONObject();
+                requestBody.put("minecraftUsername", player.getName());
+                requestBody.put("minecraftUuid", player.getUniqueId().toString());
+
+                // 요청 전송
+                try (OutputStream os = connection.getOutputStream()) {
+                    byte[] input = requestBody.toJSONString().getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+
+                int responseCode = connection.getResponseCode();
+                if (responseCode == 200) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JSONParser parser = new JSONParser();
+                    JSONObject jsonResponse = (JSONObject) parser.parse(response.toString());
+
+                    if ((Boolean) jsonResponse.get("success")) {
+                        String token = (String) jsonResponse.get("token");
+                        String tokenType = (String) jsonResponse.get("tokenType");
+                        String expiresIn = (String) jsonResponse.get("expiresIn");
+                        String message = (String) jsonResponse.get("message");
+                        
+                        JSONObject playerInfo = (JSONObject) jsonResponse.get("player");
+                        boolean isLinked = (Boolean) playerInfo.get("isLinked");
+                        
+                        StringBuilder result = new StringBuilder();
+                        result.append("§a토큰 발급 완료!\n");
+                        result.append("§e토큰: §f").append(token.substring(0, 20)).append("...\n");
+                        result.append("§e유효기간: §f").append(expiresIn).append("\n");
+                        result.append("§e연동 상태: §f").append(isLinked ? "연동됨" : "비연동").append("\n");
+                        result.append("§7").append(message);
+                        
+                        // 플레이어 데이터에 토큰 저장 (임시)
+                        player.setMetadata("muffincraft_token", new org.bukkit.metadata.FixedMetadataValue(plugin, token));
+                        
+                        return result.toString();
+                    } else {
+                        String error = (String) jsonResponse.get("error");
+                        return "§c토큰 발급 실패: " + (error != null ? error : "알 수 없는 오류");
+                    }
+                } else {
+                    return "§c서버 오류: HTTP " + responseCode;
+                }
+
+            } catch (ParseException e) {
+                plugin.getLogger().warning("JSON 파싱 오류: " + e.getMessage());
+                return "§c응답 처리 중 오류가 발생했습니다.";
+            } catch (Exception e) {
+                plugin.getLogger().severe("토큰 발급 중 오류: " + e.getMessage());
+                return "§c토큰 발급 중 오류가 발생했습니다: " + e.getMessage();
+            }
+        });
+    }
+
+    /**
+     * 플레이어 토큰 갱신 (기존 토큰이 만료되었거나 없을 때)
+     * @param player 토큰을 갱신할 플레이어
+     * @return CompletableFuture<Boolean> 갱신 성공 여부
+     */
+    public CompletableFuture<Boolean> refreshPlayerToken(Player player) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                // 기존 토큰 확인
+                String existingToken = getPlayerToken(player);
+                
+                // 토큰이 있고 유효한지 확인
+                if (existingToken != null && isTokenValid(existingToken)) {
+                    plugin.getLogger().info("플레이어 " + player.getName() + "의 토큰이 여전히 유효합니다.");
+                    return true;
+                }
+                
+                // 토큰이 없거나 만료된 경우 새로 발급
+                plugin.getLogger().info("플레이어 " + player.getName() + "의 토큰을 갱신합니다...");
+                
+                String apiUrl = baseUrl + "/player/token";
+                URL url = new URL(apiUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+                // POST 요청 설정
+                connection.setRequestMethod("POST");
+                connection.setRequestProperty("Content-Type", "application/json");
+                connection.setDoOutput(true);
+
+                // 요청 바디 생성
+                JSONObject requestBody = new JSONObject();
+                requestBody.put("minecraftUsername", player.getName());
+                requestBody.put("minecraftUuid", player.getUniqueId().toString());
+
+                // 요청 전송
+                try (OutputStream os = connection.getOutputStream()) {
+                    byte[] input = requestBody.toJSONString().getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+
+                int responseCode = connection.getResponseCode();
+                // HTTP 200 (OK) 또는 201 (Created) 모두 성공으로 처리
+                if (responseCode == 200 || responseCode == 201) {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    reader.close();
+
+                    JSONParser parser = new JSONParser();
+                    JSONObject jsonResponse = (JSONObject) parser.parse(response.toString());
+
+                    if ((Boolean) jsonResponse.get("success")) {
+                        String token = (String) jsonResponse.get("token");
+                        
+                        // 플레이어 데이터에 토큰 저장
+                        player.setMetadata("muffincraft_token", new org.bukkit.metadata.FixedMetadataValue(plugin, token));
+                        player.setMetadata("muffincraft_token_time", new org.bukkit.metadata.FixedMetadataValue(plugin, System.currentTimeMillis()));
+                        
+                        plugin.getLogger().info("플레이어 " + player.getName() + "의 토큰이 성공적으로 갱신되었습니다.");
+                        return true;
+                    }
+                }
+                
+                plugin.getLogger().warning("플레이어 " + player.getName() + "의 토큰 갱신에 실패했습니다. HTTP " + responseCode);
+                return false;
+
+            } catch (Exception e) {
+                plugin.getLogger().severe("토큰 갱신 중 오류: " + e.getMessage());
+                return false;
+            }
+        });
+    }
+
+    /**
+     * 플레이어의 저장된 토큰 가져오기
+     * @param player 토큰을 가져올 플레이어
+     * @return 저장된 토큰 또는 null
+     */
+    public String getPlayerToken(Player player) {
+        if (player.hasMetadata("muffincraft_token")) {
+            return player.getMetadata("muffincraft_token").get(0).asString();
+        }
+        return null;
+    }
+
+    /**
+     * 토큰 유효성 간단 체크 (시간 기반)
+     * @param token 확인할 토큰
+     * @return 유효 여부
+     */
+    private boolean isTokenValid(String token) {
+        // 간단한 시간 기반 체크 (실제로는 JWT 파싱이 더 정확하지만 플러그인에서는 간소화)
+        // 토큰이 5시간 이상 된 경우 갱신
+        try {
+            if (token == null || token.isEmpty()) {
+                return false;
+            }
+            
+            // 메타데이터에서 토큰 생성 시간 확인
+            long tokenTime = 0;
+            for (Player p : plugin.getServer().getOnlinePlayers()) {
+                if (p.hasMetadata("muffincraft_token") && 
+                    token.equals(p.getMetadata("muffincraft_token").get(0).asString())) {
+                    if (p.hasMetadata("muffincraft_token_time")) {
+                        tokenTime = p.getMetadata("muffincraft_token_time").get(0).asLong();
+                        break;
+                    }
+                }
+            }
+            
+            if (tokenTime == 0) {
+                return false; // 시간 정보가 없으면 무효로 처리
+            }
+            
+            // 5시간 = 5 * 60 * 60 * 1000 밀리초
+            long fiveHours = 5 * 60 * 60 * 1000L;
+            return (System.currentTimeMillis() - tokenTime) < fiveHours;
+            
+        } catch (Exception e) {
+            plugin.getLogger().warning("토큰 유효성 검사 중 오류: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * 플레이어의 API 요청에 사용할 Authorization 헤더 값 가져오기
+     * @param player API 요청을 보낼 플레이어
+     * @return "Bearer TOKEN" 형태의 문자열 또는 null
+     */
+    public String getAuthorizationHeader(Player player) {
+        String token = getPlayerToken(player);
+        if (token != null && !token.isEmpty()) {
+            return "Bearer " + token;
+        }
+        return null;
+    }
 }
