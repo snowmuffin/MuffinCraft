@@ -25,6 +25,11 @@ commands:
     description: MuffinCraft 재화 잔액을 확인합니다
     usage: /<command> [send <player> <amount>]
     permission: muffincraft.balance
+  muffin:
+    description: 머핀 아이템 관련 명령어
+    usage: /<command> [give <amount>|help]
+    aliases: [머핀]
+    permission: muffincraft.muffin
 
 permissions:
   muffincraft.*:
@@ -35,6 +40,8 @@ permissions:
       muffincraft.inventory: true
       muffincraft.warehouse: true
       muffincraft.balance: true
+      muffincraft.muffin: true
+      muffincraft.admin.give: true
   muffincraft.use:
     description: MuffinCraft 플러그인의 기본 사용 권한
     default: true
@@ -50,6 +57,12 @@ permissions:
   muffincraft.balance:
     description: 재화 시스템 사용 권한
     default: true
+  muffincraft.muffin:
+    description: 머핀 아이템 기본 사용 권한
+    default: true
+  muffincraft.admin.give:
+    description: 머핀 아이템 지급 권한 (관리자 전용)
+    default: op
 
 api:
   url: http://localhost:3000
