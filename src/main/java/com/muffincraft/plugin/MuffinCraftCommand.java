@@ -34,6 +34,8 @@ public class MuffinCraftCommand implements CommandExecutor {
                     sender.sendMessage("§cThis command can only be used by players.");
                     return true;
                 }
+                Player player = (Player) sender;
+                // TODO: Implement manual sync
                 sender.sendMessage("§aSyncing inventory...");
                 return true;
 

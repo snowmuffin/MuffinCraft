@@ -8,9 +8,11 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class WarehouseCommand implements CommandExecutor {
+    private final MuffinCraftPlugin plugin;
     private final WarehouseService warehouseService;
 
     public WarehouseCommand(MuffinCraftPlugin plugin, WarehouseService warehouseService) {
+        this.plugin = plugin;
         this.warehouseService = warehouseService;
     }
 

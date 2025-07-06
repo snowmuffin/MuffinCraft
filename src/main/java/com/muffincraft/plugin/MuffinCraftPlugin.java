@@ -8,6 +8,7 @@ import com.muffincraft.plugin.services.AuthService;
 import com.muffincraft.plugin.services.WarehouseService;
 import com.muffincraft.plugin.api.GameHubAPI;
 import com.muffincraft.plugin.config.Config;
+import com.muffincraft.plugin.commands.InventoryCommand;
 import com.muffincraft.plugin.commands.MuffinCraftCommand;
 import com.muffincraft.plugin.commands.BalanceCommand;
 import com.muffincraft.plugin.commands.WarehouseCommand;
@@ -32,16 +33,17 @@ public class MuffinCraftPlugin extends JavaPlugin {
 
         currencyService = new CurrencyService(this, gameHubAPI);
         authService = new AuthService(this, gameHubAPI);
-        warehouseService = new WarehouseService(this, gameHubAPI);
+        warehouseService = new WarehouseService(this, gameHubAPI);  // 새로운 창고 시스템
 
         // 이벤트 리스너 등록
         getServer().getPluginManager().registerEvents(new PlayerListener(this), this);
-        getServer().getPluginManager().registerEvents(new WarehouseListener(this), this);
+        getServer().getPluginManager().registerEvents(new WarehouseListener(this), this);  // 새로운 창고 리스너
 
         // 명령어 등록
         getCommand("muffincraft").setExecutor(new MuffinCraftCommand(this));
+        getCommand("inventory").setExecutor(new InventoryCommand(this));  // Deprecated
         getCommand("balance").setExecutor(new BalanceCommand(this));
-        getCommand("warehouse").setExecutor(new WarehouseCommand(this, warehouseService)); 
+        getCommand("warehouse").setExecutor(new WarehouseCommand(this, warehouseService));  // 새로운 창고 명령어
 
         getLogger().info("MuffinCraft Plugin has been enabled!");
         getLogger().info("외부 창고 시스템이 활성화되었습니다. /warehouse 명령어를 사용하세요!");
