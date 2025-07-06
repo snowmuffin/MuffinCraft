@@ -2,9 +2,13 @@ package com.muffincraft.plugin.services;
 
 import com.muffincraft.plugin.MuffinCraftPlugin;
 import com.muffincraft.plugin.api.GameHubAPI;
+
+import net.kyori.adventure.text.Component;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -27,9 +31,7 @@ public class WarehouseService {
         this.openWarehouses = new HashMap<>();
     }
 
-    /**
-     * 플레이어에게 창고 GUI를 열어줍니다
-     */
+
     public void openWarehouseGUI(Player player) {
         String authHeader = plugin.getAuthService().getAuthorizationHeader(player);
         
@@ -38,7 +40,6 @@ public class WarehouseService {
             return;
         }
 
-        // 창고 데이터 가져오기
         gameHubAPI.getWarehouseItems(player.getUniqueId(), authHeader)
             .thenAccept(warehouseData -> {
                 Bukkit.getScheduler().runTask(plugin, () -> {
@@ -51,11 +52,10 @@ public class WarehouseService {
             });
     }
 
-    /**
-     * 창고 GUI를 생성하고 보여줍니다
-     */
+
     private void createAndShowWarehouseGUI(Player player, JSONArray warehouseData) {
-        Inventory warehouse = Bukkit.createInventory(null, 54, "§6MuffinCraft 외부 창고");
+        Inventory warehouse = Bukkit.createInventory(null, InventoryType.CHEST, Component.text("MuffinCraft Inventory"));
+
         
         if (warehouseData != null) {
             for (Object item : warehouseData) {
@@ -70,12 +70,12 @@ public class WarehouseService {
                     ItemStack itemStack = new ItemStack(material, Math.min(quantity.intValue(), 64));
                     ItemMeta meta = itemStack.getItemMeta();
                     if (meta != null) {
-                        meta.setDisplayName("§f" + itemName);
-                        meta.setLore(Arrays.asList(
-                            "§7창고 보유량: §e" + quantity,
-                            "§7좌클릭: §a1개 출금",
-                            "§7우클릭: §a64개 출금",
-                            "§7Shift+클릭: §a전체 출금"
+                        meta.displayName(Component.text("§f" + itemName));
+                        meta.lore(Arrays.asList(
+                            Component.text("§7창고 보유량: §e" + quantity),
+                            Component.text("§7좌클릭: §a1개 출금"),
+                            Component.text("§7우클릭: §a64개 출금"),
+                            Component.text("§7Shift+클릭: §a전체 출금")
                         ));
                         itemStack.setItemMeta(meta);
                     }
@@ -369,12 +369,12 @@ public class WarehouseService {
                                 ItemStack itemStack = new ItemStack(material, Math.min(quantity.intValue(), 64));
                                 ItemMeta meta = itemStack.getItemMeta();
                                 if (meta != null) {
-                                    meta.setDisplayName("§f" + itemName);
-                                    meta.setLore(Arrays.asList(
-                                        "§7수량: §e" + quantity,
-                                        "§7좌클릭: §a1개 출금",
-                                        "§7우클릭: §a64개 출금",
-                                        "§7Shift+클릭: §a전체 출금"
+                                    meta.displayName(Component.text("§f" + itemName));
+                                    meta.lore(Arrays.asList(
+                                        Component.text("§7수량: §e" + quantity),
+                                        Component.text("§7좌클릭: §a1개 출금"),
+                                        Component.text("§7우클릭: §a64개 출금"),
+                                        Component.text("§7Shift+클릭: §a전체 출금")
                                     ));
                                     itemStack.setItemMeta(meta);
                                 }

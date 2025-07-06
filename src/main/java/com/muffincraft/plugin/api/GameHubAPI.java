@@ -2,12 +2,18 @@ package com.muffincraft.plugin.api;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.muffincraft.plugin.MuffinCraftPlugin;
 import okhttp3.*;
 import org.bukkit.inventory.ItemStack;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +31,6 @@ public class GameHubAPI {
         this.client = new OkHttpClient();
         this.gson = new GsonBuilder().create();
 
-        // 설정에서 인증 토큰 로드
         this.authToken = plugin.getConfigManager().getString("api.token", "");
     }
 
@@ -37,8 +42,8 @@ public class GameHubAPI {
             itemData.put("metadata", serializeItemMetadata(item));
 
             RequestBody body = RequestBody.create(
-                MediaType.parse("application/json"),
-                gson.toJson(itemData)
+                gson.toJson(itemData),
+                MediaType.parse("application/json")
             );
 
             Request request = new Request.Builder()
@@ -60,10 +65,21 @@ public class GameHubAPI {
         Map<String, Object> metadata = new HashMap<>();
         if (item.hasItemMeta()) {
             if (item.getItemMeta().hasDisplayName()) {
-                metadata.put("displayName", item.getItemMeta().getDisplayName());
+                // Use Adventure API for display name to avoid deprecation
+                if (item.getItemMeta().displayName() != null) {
+                    metadata.put("displayName", LegacyComponentSerializer.legacySection().serialize(item.getItemMeta().displayName()));
+                }
             }
             if (item.getItemMeta().hasLore()) {
-                metadata.put("lore", item.getItemMeta().getLore());
+                // Use Adventure API for lore to avoid deprecation
+                List<Component> loreComponents = item.getItemMeta().lore();
+                if (loreComponents != null) {
+                    List<String> lore = new ArrayList<>();
+                    for (Component component : loreComponents) {
+                        lore.add(LegacyComponentSerializer.legacySection().serialize(component));
+                    }
+                    metadata.put("lore", lore);
+                }
             }
         }
         return metadata;
@@ -81,7 +97,8 @@ public class GameHubAPI {
                 if (!response.isSuccessful() || response.body() == null) {
                     throw new IOException("Failed to get inventory");
                 }
-                return gson.fromJson(response.body().string(), Map.class);
+                Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
+                return gson.fromJson(response.body().string(), mapType);
             } catch (IOException e) {
                 plugin.getLogger().warning("Failed to get inventory: " + e.getMessage());
                 return new HashMap<>();
@@ -101,7 +118,8 @@ public class GameHubAPI {
                 if (!response.isSuccessful() || response.body() == null) {
                     throw new IOException("Failed to get balance");
                 }
-                Map<String, Object> result = gson.fromJson(response.body().string(), Map.class);
+                Type mapType = new TypeToken<Map<String, Object>>(){}.getType();
+                Map<String, Object> result = gson.fromJson(response.body().string(), mapType);
                 return ((Number) result.get("balance")).doubleValue();
             } catch (Exception e) {
                 plugin.getLogger().warning("Failed to get balance: " + e.getMessage());
@@ -118,8 +136,8 @@ public class GameHubAPI {
             transferData.put("amount", amount);
 
             RequestBody body = RequestBody.create(
-                MediaType.parse("application/json"),
-                gson.toJson(transferData)
+                gson.toJson(transferData),
+                MediaType.parse("application/json")
             );
 
             Request request = new Request.Builder()
@@ -144,8 +162,8 @@ public class GameHubAPI {
             addData.put("amount", amount);
 
             RequestBody body = RequestBody.create(
-                MediaType.parse("application/json"),
-                gson.toJson(addData)
+                gson.toJson(addData),
+                MediaType.parse("application/json")
             );
 
             Request request = new Request.Builder()
@@ -304,8 +322,8 @@ public class GameHubAPI {
                 itemData.put("metadata", serializeItemMetadata(item));
 
                 RequestBody body = RequestBody.create(
-                    MediaType.parse("application/json"),
-                    gson.toJson(itemData)
+                    gson.toJson(itemData),
+                    MediaType.parse("application/json")
                 );
 
                 Request request = new Request.Builder()
@@ -335,8 +353,8 @@ public class GameHubAPI {
                 withdrawData.put("quantity", quantity);
 
                 RequestBody body = RequestBody.create(
-                    MediaType.parse("application/json"),
-                    gson.toJson(withdrawData)
+                    gson.toJson(withdrawData),
+                    MediaType.parse("application/json")
                 );
 
                 Request request = new Request.Builder()

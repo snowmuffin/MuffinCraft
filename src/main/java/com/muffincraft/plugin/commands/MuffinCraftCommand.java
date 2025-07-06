@@ -5,7 +5,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import java.util.Arrays;
 
 public class MuffinCraftCommand implements CommandExecutor {
     private final MuffinCraftPlugin plugin;
@@ -16,7 +15,6 @@ public class MuffinCraftCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // 플레이어가 명령어를 실행하는 경우 토큰 자동 갱신
         if (sender instanceof Player) {
             Player player = (Player) sender;
             plugin.getAuthService().refreshPlayerToken(player);
@@ -59,7 +57,7 @@ public class MuffinCraftCommand implements CommandExecutor {
                 plugin.getAuthService().generateAuthCode(authPlayer).thenAccept(result -> {
                     authPlayer.sendMessage("§6===== 계정 연동 인증 코드 =====");
                     authPlayer.sendMessage(result);
-                    if (result.contains("§a")) { // 성공한 경우
+                    if (result.contains("§a")) {
                         authPlayer.sendMessage("§7웹사이트에서 이 코드를 입력하여 계정을 연동하세요.");
                         authPlayer.sendMessage("§7인증 코드는 10분간 유효합니다.");
                     }
@@ -99,7 +97,7 @@ public class MuffinCraftCommand implements CommandExecutor {
                 plugin.getAuthService().generatePlayerToken(tokenPlayer).thenAccept(result -> {
                     tokenPlayer.sendMessage("§6===== 플레이어 토큰 발급 =====");
                     tokenPlayer.sendMessage(result);
-                    if (result.contains("§a")) { // 성공한 경우
+                    if (result.contains("§a")) {
                         tokenPlayer.sendMessage("§7이 토큰으로 API를 사용할 수 있습니다.");
                         tokenPlayer.sendMessage("§7토큰은 연동 상태에 따라 6-24시간 유효합니다.");
                     }

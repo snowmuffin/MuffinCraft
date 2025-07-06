@@ -23,17 +23,14 @@ public class BalanceCommand implements CommandExecutor {
 
         Player player = (Player) sender;
         
-        // 플레이어 토큰 자동 갱신
         plugin.getAuthService().refreshPlayerToken(player);
 
         if (args.length == 0) {
-            // 잔액 확인
             plugin.getCurrencyService().checkBalance(player);
             return true;
         }
 
         if (args.length == 3 && args[0].equalsIgnoreCase("send")) {
-            // 다른 플레이어에게 재화 전송
             Player target = Bukkit.getPlayer(args[1]);
             if (target == null) {
                 sender.sendMessage("§c플레이어를 찾을 수 없습니다: " + args[1]);

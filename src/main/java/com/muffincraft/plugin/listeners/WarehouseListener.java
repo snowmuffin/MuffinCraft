@@ -9,11 +9,9 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.entity.Player;
 
 public class WarehouseListener implements Listener {
-    private final MuffinCraftPlugin plugin;
     private final WarehouseService warehouseService;
 
     public WarehouseListener(MuffinCraftPlugin plugin) {
-        this.plugin = plugin;
         this.warehouseService = plugin.getWarehouseService();
     }
 
@@ -27,11 +25,9 @@ public class WarehouseListener implements Listener {
         Player player = (Player) event.getWhoClicked();
         String inventoryTitle = event.getView().getTitle();
         
-        // 창고 GUI가 열려있는지 확인
         if (inventoryTitle.equals("§6MuffinCraft 외부 창고")) {
-            event.setCancelled(true); // 아이템 이동 방지
+            event.setCancelled(true);
             
-            // 창고 GUI에서 클릭한 경우 (출금)
             if (event.getClickedInventory() != null && 
                 event.getClickedInventory().equals(event.getView().getTopInventory())) {
                 
@@ -42,7 +38,6 @@ public class WarehouseListener implements Listener {
                     warehouseService.handleWarehouseClick(player, event.getCurrentItem(), isShiftClick, isRightClick);
                 }
             }
-            // 플레이어 인벤토리에서 클릭한 경우 (입금)
             else if (event.getClickedInventory() != null && 
                      event.getClickedInventory().equals(player.getInventory())) {
                 
