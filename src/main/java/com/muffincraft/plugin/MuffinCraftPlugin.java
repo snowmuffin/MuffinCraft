@@ -56,7 +56,6 @@ public class MuffinCraftPlugin extends JavaPlugin {
 
         // 명령어 등록
         getCommand("muffincraft").setExecutor(new MuffinCraftCommand(this));
-        getCommand("inventory").setExecutor(new InventoryCommand(this));  // Deprecated
         getCommand("balance").setExecutor(new BalanceCommand(this));
         getCommand("warehouse").setExecutor(new WarehouseCommand(this, warehouseService));  // 새로운 창고 명령어
         getCommand("muffin").setExecutor(new MuffinCommand(this));  // 머핀 명령어
