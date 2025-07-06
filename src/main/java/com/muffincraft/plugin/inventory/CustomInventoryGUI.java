@@ -18,14 +18,9 @@ public class CustomInventoryGUI {
     }
 
     public void open() {
-        loadInventory();
         player.openInventory(inventory);
     }
 
-    private void loadInventory() {
-        // GameHub API를 통해 플레이어의 인벤토리 데이터를 가져옵니다
-        plugin.getInventoryService().loadPlayerInventory(player);
-    }
 
     public void updateInventory(ItemStack[] items) {
         inventory.setContents(items);

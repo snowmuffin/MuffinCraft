@@ -47,15 +47,6 @@ public class MuffinCraftCommand implements CommandExecutor {
                 sender.sendMessage("§a설정 파일을 다시 로드했습니다.");
                 return true;
 
-            case "sync":
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
-                    return true;
-                }
-                Player player = (Player) sender;
-                plugin.getInventoryService().handleInventoryChange(player, Arrays.asList(player.getInventory().getContents()));
-                sender.sendMessage("§a인벤토리 동기화를 시작했습니다.");
-                return true;
 
             case "auth":
                 if (!(sender instanceof Player)) {

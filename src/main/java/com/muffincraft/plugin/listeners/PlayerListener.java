@@ -31,7 +31,6 @@ public class PlayerListener implements Listener {
         // 토큰 자동 갱신 체크 (비동기)
         plugin.getAuthService().refreshPlayerToken(player);
         
-        plugin.getInventoryService().handleInventoryChange(player, event.getCurrentItem());
     }
 
     @EventHandler
@@ -49,7 +48,6 @@ public class PlayerListener implements Listener {
         
         // 플레이어 접속 시 온라인 인벤토리 로드 (토큰 갱신 후 약간의 지연)
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            plugin.getInventoryService().loadPlayerInventory(player);
         }, 20L); // 1초 후 실행
     }
 
@@ -64,10 +62,7 @@ public class PlayerListener implements Listener {
         // 토큰 자동 갱신 체크 (비동기)
         plugin.getAuthService().refreshPlayerToken(player);
         
-        plugin.getInventoryService().handleInventoryChange(
-            player,
-            event.getItem().getItemStack()
-        );
+
     }
 
     @EventHandler
@@ -75,9 +70,6 @@ public class PlayerListener implements Listener {
         // 토큰 자동 갱신 체크 (비동기)
         plugin.getAuthService().refreshPlayerToken(event.getPlayer());
         
-        plugin.getInventoryService().handleInventoryChange(
-            event.getPlayer(),
-            event.getItemDrop().getItemStack()
-        );
+
     }
 }

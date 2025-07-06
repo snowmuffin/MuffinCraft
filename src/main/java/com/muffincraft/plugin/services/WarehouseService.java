@@ -34,7 +34,7 @@ public class WarehouseService {
         String authHeader = plugin.getAuthService().getAuthorizationHeader(player);
         
         if (authHeader == null) {
-            player.sendMessage("§c토큰이 없어 창고를 열 수 없습니다. 다시 접속해주세요.");
+            player.sendMessage("유효하지 않은 접근이 감지되었습니다. 다시 시도해 주세요.");
             return;
         }
 

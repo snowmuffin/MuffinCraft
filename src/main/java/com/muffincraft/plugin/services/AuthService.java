@@ -3,9 +3,10 @@ package com.muffincraft.plugin.services;
 import com.muffincraft.plugin.MuffinCraftPlugin;
 import com.muffincraft.plugin.api.GameHubAPI;
 import org.bukkit.entity.Player;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -18,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 public class AuthService {
     private final MuffinCraftPlugin plugin;
     private final String baseUrl;
+    private final Gson gson = new Gson(); // Gson 인스턴스 추가
 
     public AuthService(MuffinCraftPlugin plugin, GameHubAPI gameHubAPI) {
         this.plugin = plugin;
@@ -42,14 +44,14 @@ public class AuthService {
                 connection.setDoOutput(true);
 
                 // 요청 바디 생성
-                JSONObject requestBody = new JSONObject();
-                requestBody.put("minecraftUsername", player.getName());
-                requestBody.put("minecraftUuid", player.getUniqueId().toString());
+                JsonObject requestBody = new JsonObject();
+                requestBody.addProperty("minecraftUsername", player.getName());
+                requestBody.addProperty("minecraftUuid", player.getUniqueId().toString());
 
                 // 요청 전송
                 try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = requestBody.toJSONString().getBytes(StandardCharsets.UTF_8);
-                    os.write(input, 0, input.length);
+                    byte[] input = gson.toJson(requestBody).getBytes(StandardCharsets.UTF_8);
+                    os.write(input);
                 }
 
                 // 응답 처리
@@ -64,22 +66,21 @@ public class AuthService {
                     reader.close();
 
                     // JSON 응답 파싱
-                    JSONParser parser = new JSONParser();
-                    JSONObject jsonResponse = (JSONObject) parser.parse(response.toString());
+                    JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
 
-                    if ((Boolean) jsonResponse.get("success")) {
-                        String authCode = (String) jsonResponse.get("authCode");
-                        String message = (String) jsonResponse.get("message");
-                        return "§a인증 코드: §e" + authCode + "\n§7" + (message != null ? message : "");
+                    if (jsonResponse.get("success").getAsBoolean()) {
+                        String authCode = jsonResponse.get("authCode").getAsString();
+                        String message = jsonResponse.has("message") ? jsonResponse.get("message").getAsString() : "";
+                        return "§a인증 코드: §e" + authCode + "\n§7" + message;
                     } else {
-                        String error = (String) jsonResponse.get("message");
-                        return "§c인증 코드 생성 실패: " + (error != null ? error : "알 수 없는 오류");
+                        String error = jsonResponse.has("message") ? jsonResponse.get("message").getAsString() : "알 수 없는 오류";
+                        return "§c인증 코드 생성 실패: " + error;
                     }
                 } else {
                     return "§c서버 오류: HTTP " + responseCode;
                 }
 
-            } catch (ParseException e) {
+            } catch (JsonSyntaxException e) {
                 plugin.getLogger().warning("JSON 파싱 오류: " + e.getMessage());
                 return "§c응답 처리 중 오류가 발생했습니다.";
             } catch (Exception e) {
@@ -114,12 +115,11 @@ public class AuthService {
                     }
                     reader.close();
 
-                    JSONParser parser = new JSONParser();
-                    JSONObject jsonResponse = (JSONObject) parser.parse(response.toString());
+                    JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
 
-                    if ((Boolean) jsonResponse.get("success")) {
-                        JSONObject data = (JSONObject) jsonResponse.get("data");
-                        if (data != null && data.get("isLinked") != null && (Boolean) data.get("isLinked")) {
+                    if (jsonResponse.get("success").getAsBoolean()) {
+                        JsonObject data = jsonResponse.has("data") ? jsonResponse.get("data").getAsJsonObject() : null;
+                        if (data != null && data.has("isLinked") && data.get("isLinked").getAsBoolean()) {
                             return "§a계정이 연동되어 있습니다.";
                         } else {
                             return "§e계정이 연동되지 않았습니다. §7/muffincraft auth §e명령어로 인증 코드를 발급받으세요.";
@@ -158,14 +158,14 @@ public class AuthService {
                 connection.setDoOutput(true);
 
                 // 요청 바디 생성
-                JSONObject requestBody = new JSONObject();
-                requestBody.put("minecraftUsername", player.getName());
-                requestBody.put("minecraftUuid", player.getUniqueId().toString());
+                JsonObject requestBody = new JsonObject();
+                requestBody.addProperty("minecraftUsername", player.getName());
+                requestBody.addProperty("minecraftUuid", player.getUniqueId().toString());
 
                 // 요청 전송
                 try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = requestBody.toJSONString().getBytes(StandardCharsets.UTF_8);
-                    os.write(input, 0, input.length);
+                    byte[] input = gson.toJson(requestBody).getBytes(StandardCharsets.UTF_8);
+                    os.write(input);
                 }
 
                 int responseCode = connection.getResponseCode();
@@ -178,17 +178,15 @@ public class AuthService {
                     }
                     reader.close();
 
-                    JSONParser parser = new JSONParser();
-                    JSONObject jsonResponse = (JSONObject) parser.parse(response.toString());
+                    JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
 
-                    if ((Boolean) jsonResponse.get("success")) {
-                        String token = (String) jsonResponse.get("token");
-                        String tokenType = (String) jsonResponse.get("tokenType");
-                        String expiresIn = (String) jsonResponse.get("expiresIn");
-                        String message = (String) jsonResponse.get("message");
+                    if (jsonResponse.get("success").getAsBoolean()) {
+                        String token = jsonResponse.get("token").getAsString();
+                        String expiresIn = jsonResponse.has("expiresIn") ? jsonResponse.get("expiresIn").getAsString() : "";
+                        String message = jsonResponse.has("message") ? jsonResponse.get("message").getAsString() : "";
                         
-                        JSONObject playerInfo = (JSONObject) jsonResponse.get("player");
-                        boolean isLinked = (Boolean) playerInfo.get("isLinked");
+                        JsonObject playerInfo = jsonResponse.has("player") ? jsonResponse.get("player").getAsJsonObject() : null;
+                        boolean isLinked = playerInfo != null && playerInfo.has("isLinked") && playerInfo.get("isLinked").getAsBoolean();
                         
                         StringBuilder result = new StringBuilder();
                         result.append("§a토큰 발급 완료!\n");
@@ -202,14 +200,14 @@ public class AuthService {
                         
                         return result.toString();
                     } else {
-                        String error = (String) jsonResponse.get("error");
-                        return "§c토큰 발급 실패: " + (error != null ? error : "알 수 없는 오류");
+                        String error = jsonResponse.has("error") ? jsonResponse.get("error").getAsString() : "알 수 없는 오류";
+                        return "§c토큰 발급 실패: " + error;
                     }
                 } else {
                     return "§c서버 오류: HTTP " + responseCode;
                 }
 
-            } catch (ParseException e) {
+            } catch (JsonSyntaxException e) {
                 plugin.getLogger().warning("JSON 파싱 오류: " + e.getMessage());
                 return "§c응답 처리 중 오류가 발생했습니다.";
             } catch (Exception e) {
@@ -249,14 +247,14 @@ public class AuthService {
                 connection.setDoOutput(true);
 
                 // 요청 바디 생성
-                JSONObject requestBody = new JSONObject();
-                requestBody.put("minecraftUsername", player.getName());
-                requestBody.put("minecraftUuid", player.getUniqueId().toString());
+                JsonObject requestBody = new JsonObject();
+                requestBody.addProperty("minecraftUsername", player.getName());
+                requestBody.addProperty("minecraftUuid", player.getUniqueId().toString());
 
                 // 요청 전송
                 try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = requestBody.toJSONString().getBytes(StandardCharsets.UTF_8);
-                    os.write(input, 0, input.length);
+                    byte[] input = gson.toJson(requestBody).getBytes(StandardCharsets.UTF_8);
+                    os.write(input);
                 }
 
                 int responseCode = connection.getResponseCode();
@@ -270,11 +268,10 @@ public class AuthService {
                     }
                     reader.close();
 
-                    JSONParser parser = new JSONParser();
-                    JSONObject jsonResponse = (JSONObject) parser.parse(response.toString());
+                    JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
 
-                    if ((Boolean) jsonResponse.get("success")) {
-                        String token = (String) jsonResponse.get("token");
+                    if (jsonResponse.get("success").getAsBoolean()) {
+                        String token = jsonResponse.get("token").getAsString();
                         
                         // 플레이어 데이터에 토큰 저장
                         player.setMetadata("muffincraft_token", new org.bukkit.metadata.FixedMetadataValue(plugin, token));
