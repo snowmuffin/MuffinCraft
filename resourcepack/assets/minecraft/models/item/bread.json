@@ -1,7 +1,7 @@
 {
   "parent": "item/generated",
   "textures": {
-    "layer0": "item/bread"
+    "layer0": "item/custom/muffin"
   },
   "overrides": [
     {
