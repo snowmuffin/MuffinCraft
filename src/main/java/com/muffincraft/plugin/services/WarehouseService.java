@@ -35,7 +35,6 @@ public class WarehouseService {
         
         if (authHeader == null) {
             player.sendMessage("유효하지 않은 접근이 감지되었습니다. 다시 시도해 주세요.");
-            return;
         }
 
         // 창고 데이터 가져오기

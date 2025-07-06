@@ -10,7 +10,6 @@ import com.muffincraft.plugin.services.ResourcePackService;
 import com.muffincraft.plugin.items.CustomItemManager;
 import com.muffincraft.plugin.api.GameHubAPI;
 import com.muffincraft.plugin.config.Config;
-import com.muffincraft.plugin.commands.InventoryCommand;
 import com.muffincraft.plugin.commands.MuffinCraftCommand;
 import com.muffincraft.plugin.commands.BalanceCommand;
 import com.muffincraft.plugin.commands.WarehouseCommand;
