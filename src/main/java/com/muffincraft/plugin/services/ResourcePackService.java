@@ -1,15 +1,12 @@
 package com.muffincraft.plugin.services;
 
 import com.muffincraft.plugin.MuffinCraftPlugin;
-import com.muffincraft.plugin.api.GameHubAPI;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.Bukkit;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -74,12 +71,18 @@ public class ResourcePackService implements Listener {
         // 약간의 지연 후 리소스팩 적용 (접속 완료 후)
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             applyResourcePack(player);
-        }, 20L); // 1초 후
+            
+            // 디버깅 정보 출력
+            plugin.getLogger().info("플레이어 " + player.getName() + "에게 리소스팩 적용 시도");
+            plugin.getLogger().info("리소스팩 URL: " + resourcePackUrl);
+            plugin.getLogger().info("리소스팩 해시: " + resourcePackHash);
+        }, 40L); // 2초 후
     }
 
     /**
      * 플레이어에게 리소스팩을 적용합니다
      */
+    @SuppressWarnings("deprecation")
     public void applyResourcePack(Player player) {
         try {
             if (resourcePackUrl.isEmpty() || resourcePackUrl.equals("http://your-server.com/muffincraft-resourcepack.zip")) {
@@ -91,19 +94,23 @@ public class ResourcePackService implements Listener {
             player.sendMessage("§aMuffinCraft 리소스팩을 다운로드 중입니다...");
             player.sendMessage("§7잠시만 기다려주세요.");
 
-            // 리소스팩 적용 (간단한 URL 방식 사용)
+            // 리소스팩 적용 (deprecated 메서드지만 가장 안정적)
             try {
                 if (resourcePackHash != null && !resourcePackHash.isEmpty() && !resourcePackHash.equals("dummy-hash")) {
                     // 해시가 있는 경우 해시와 함께 전송
                     byte[] hashBytes = HexFormat.of().parseHex(resourcePackHash);
-                    player.setResourcePack(resourcePackUrl, hashBytes);
+                    player.setResourcePack(resourcePackUrl, hashBytes, resourcePackRequired);
                 } else {
                     // 해시가 없는 경우 URL만 전송
-                    player.setResourcePack(resourcePackUrl);
+                    player.setResourcePack(resourcePackUrl, (byte[])null, resourcePackRequired);
                 }
+                
+                plugin.getLogger().info(player.getName() + "에게 리소스팩 전송: " + resourcePackUrl);
+                
             } catch (Exception hashError) {
                 // 해시 처리 실패 시 URL만으로 전송
-                player.setResourcePack(resourcePackUrl);
+                player.setResourcePack(resourcePackUrl, (byte[])null, resourcePackRequired);
+                plugin.getLogger().warning("해시 처리 실패, URL만으로 리소스팩 전송: " + hashError.getMessage());
             }
             
         } catch (Exception e) {
@@ -119,6 +126,8 @@ public class ResourcePackService implements Listener {
     public void onResourcePackStatus(PlayerResourcePackStatusEvent event) {
         Player player = event.getPlayer();
         PlayerResourcePackStatusEvent.Status status = event.getStatus();
+
+        plugin.getLogger().info(player.getName() + "의 리소스팩 상태: " + status);
 
         switch (status) {
             case SUCCESSFULLY_LOADED:
@@ -140,13 +149,29 @@ public class ResourcePackService implements Listener {
             case FAILED_DOWNLOAD:
                 player.sendMessage("§c리소스팩 다운로드에 실패했습니다.");
                 player.sendMessage("§7인터넷 연결을 확인하거나 관리자에게 문의해주세요.");
+                plugin.getLogger().warning(player.getName() + "의 리소스팩 다운로드 실패: " + resourcePackUrl);
                 break;
                 
             case ACCEPTED:
                 player.sendMessage("§a리소스팩 다운로드를 시작합니다...");
                 break;
                 
+            case INVALID_URL:
+                player.sendMessage("§c리소스팩 URL이 잘못되었습니다.");
+                plugin.getLogger().warning("리소스팩 URL이 잘못됨: " + resourcePackUrl);
+                break;
+                
+            case FAILED_RELOAD:
+                player.sendMessage("§c리소스팩 적용에 실패했습니다.");
+                plugin.getLogger().warning(player.getName() + "의 리소스팩 적용 실패");
+                break;
+                
+            case DISCARDED:
+                player.sendMessage("§e리소스팩이 취소되었습니다.");
+                break;
+                
             default:
+                plugin.getLogger().info("알 수 없는 리소스팩 상태: " + status);
                 break;
         }
     }
@@ -178,13 +203,13 @@ public class ResourcePackService implements Listener {
         try {
             // 백엔드 API URL 구성
             String apiUrl = plugin.getConfig().getString("api.url", "http://localhost:4000/api");
-            String infoUrl = apiUrl + "/muffincraft/resourcepack/info";
+            String infoUrl = apiUrl + "/resourcepack/info";
             
             plugin.getLogger().info("백엔드에서 리소스팩 정보를 가져오는 중: " + infoUrl);
             
             // HTTP 요청으로 리소스팩 정보 가져오기
             // 여기서는 간단히 설정된 URL을 사용하되, 실제로는 HTTP 클라이언트로 요청해야 함
-            String backendUrl = apiUrl + "/muffincraft/resourcepack/download";
+            String backendUrl = apiUrl + "/resourcepack/download";
             
             // 설정 업데이트
             this.resourcePackUrl = backendUrl;

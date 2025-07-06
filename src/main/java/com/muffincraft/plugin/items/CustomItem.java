@@ -50,6 +50,12 @@ public class CustomItem {
             meta.getPersistentDataContainer().set(customItemKey, PersistentDataType.STRING, id);
             
             item.setItemMeta(meta);
+            
+            // 디버깅을 위한 로그
+            System.out.println("[DEBUG] 커스텀 아이템 생성됨: " + id + 
+                ", CustomModelData: " + customModelData + 
+                ", Material: " + baseMaterial + 
+                ", Amount: " + amount);
         }
         
         return item;

@@ -43,6 +43,9 @@ public class MuffinCommand implements CommandExecutor, TabCompleter {
             case "help":
                 sendHelp(player);
                 break;
+            case "reload-resourcepack":
+                handleReloadResourcePack(player);
+                break;
             default:
                 sendHelp(player);
                 break;
@@ -86,6 +89,14 @@ public class MuffinCommand implements CommandExecutor, TabCompleter {
                 return;
             }
 
+            // 디버깅 정보 출력
+            player.sendMessage("§7[DEBUG] 아이템 타입: " + muffin.getType());
+            if (muffin.hasItemMeta() && muffin.getItemMeta().hasCustomModelData()) {
+                player.sendMessage("§7[DEBUG] CustomModelData: " + muffin.getItemMeta().getCustomModelData());
+            } else {
+                player.sendMessage("§7[DEBUG] CustomModelData가 설정되지 않음!");
+            }
+
             // 플레이어 인벤토리에 추가
             if (player.getInventory().firstEmpty() == -1) {
                 player.sendMessage("§c인벤토리에 공간이 부족합니다.");
@@ -94,12 +105,27 @@ public class MuffinCommand implements CommandExecutor, TabCompleter {
 
             player.getInventory().addItem(muffin);
             player.sendMessage("§a머핀 " + amount + "개를 지급받았습니다!");
+            player.sendMessage("§e리소스팩이 적용되지 않으면 빵으로 표시됩니다.");
             
             plugin.getLogger().info(player.getName() + "에게 머핀 " + amount + "개를 지급했습니다.");
 
         } catch (NumberFormatException e) {
             player.sendMessage("§c올바른 숫자를 입력해주세요.");
         }
+    }
+
+    /**
+     * 리소스팩 재로드 명령어 처리
+     */
+    private void handleReloadResourcePack(Player player) {
+        // 권한 확인
+        if (!player.hasPermission("muffincraft.admin.reload")) {
+            player.sendMessage("§c이 명령어를 사용할 권한이 없습니다.");
+            return;
+        }
+
+        player.sendMessage("§e리소스팩을 다시 적용합니다...");
+        plugin.getResourcePackService().applyResourcePack(player);
     }
 
     /**
@@ -113,8 +139,13 @@ public class MuffinCommand implements CommandExecutor, TabCompleter {
             player.sendMessage("§e/muffin give <수량> §7- 머핀 아이템을 지급합니다 (관리자 전용)");
         }
         
+        if (player.hasPermission("muffincraft.admin.reload")) {
+            player.sendMessage("§e/muffin reload-resourcepack §7- 리소스팩을 다시 적용합니다 (관리자 전용)");
+        }
+        
         player.sendMessage("§7머핀은 MuffinCraft의 공식 화폐입니다!");
         player.sendMessage("§7우클릭으로 사용하거나 상점에서 거래할 수 있습니다.");
+        player.sendMessage("§c※ 리소스팩이 적용되지 않으면 빵으로 표시됩니다.");
     }
 
     @Override
@@ -123,10 +154,15 @@ public class MuffinCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // 첫 번째 인수: 하위 명령어
-            List<String> subCommands = Arrays.asList("help");
+            List<String> subCommands = new ArrayList<>();
+            subCommands.add("help");
             
             if (sender.hasPermission("muffincraft.admin.give")) {
-                subCommands = Arrays.asList("give", "help");
+                subCommands.add("give");
+            }
+            
+            if (sender.hasPermission("muffincraft.admin.reload")) {
+                subCommands.add("reload-resourcepack");
             }
             
             for (String subCommand : subCommands) {
